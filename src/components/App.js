@@ -1,4 +1,8 @@
 import React, { useState } from "react";
+import Logo from "./logo";
+import Form from "./Form";
+// import PackingList from "./PackingList";
+import Stats from "./Stats";
 
 // Initial packing items
 const initialItems = [
@@ -6,70 +10,16 @@ const initialItems = [
   { id: 2, description: "Pants", quantity: 2, packed: false },
 ];
 
-function Logo() {
-  return <h1>My Travel List</h1>;
-}
-
-function Form({ handleAddItem }) {
-  const [description, setDescription] = useState("");
-  const [quantity, setQuantity] = useState(1);
-
-  // Handle form submission and add new item
-  function handleSubmit(e) {
-    e.preventDefault();
-
-    if (!description.trim()) return;
-
-    const newItem = {
-        id: Date.now(),
-        description,
-        quantity,
-        packed: false,
-      };
-
-    handleAddItem(newItem);
-
-    setDescription("");
-    setQuantity(1);
-    }
-  
-
-    return (
-    <form className="add-form" onSubmit={handleSubmit}>
-      <h3>What do you need to pack?</h3>
-      <label htmlFor="quantity">Quantity:</label>
-      <select
-        id="quantity"
-        value={quantity}
-        onChange={(e) => setQuantity(Number(e.target.value))}
-      >
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-      </select>
-
-      <input
-        type="text"
-        placeholder="Item..."
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-      />
-
-      <button type="submit">ADD</button>
-    </form>
-  );
-}
-
 function Item({ item, handleTogglePacked, handleDeleteItem }) {
   return (
     <li>
-      <span style={{ textDecoration: item.packed ? "line-through" : "none" }} >
-      <input
-        type="checkbox"
-        checked={item.packed}
-        onChange={() => handleTogglePacked(item.id)}
-      />
-      {item.description} ({item.quantity})
+      <span style={{ textDecoration: item.packed ? "line-through" : "none" }}>
+        <input
+          type="checkbox"
+          checked={item.packed}
+          onChange={() => handleTogglePacked(item.id)}
+        />
+        {item.description} ({item.quantity})
       </span>
       <button
         onClick={() => handleDeleteItem(item.id)}
@@ -79,7 +29,7 @@ function Item({ item, handleTogglePacked, handleDeleteItem }) {
           border: "none",
           color: "black",
           cursor: "pointer",
-          fontSize: "40px",
+          fontSize: "20px",
         }}
         aria-label="Delete item"
       >
@@ -89,12 +39,30 @@ function Item({ item, handleTogglePacked, handleDeleteItem }) {
   );
 }
 
+function PackingList({ items, handleTogglePacked, handleDeleteItem, sortOption, setSortOption }) {
+  const sortedItems = [...items].sort((a, b) => {
+    if (sortOption === "input") return a.id - b.id;
+    if (sortOption === "description") return a.description.localeCompare(b.description);
+    if (sortOption === "packed") return a.packed - b.packed;
+    return 0;
+  });
 
-function PackingList({ items, handleTogglePacked, handleDeleteItem }) {
   return (
     <div className="list">
+      <div className="sort-options">
+        <label htmlFor="sort">Sort by:</label>
+        <select
+          id="sort"
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value)}
+        >
+          <option value="input">Input Order</option>
+          <option value="description">Description</option>
+          <option value="packed">Packed Status</option>
+        </select>
+      </div>
       <ul>
-        {items.map((item) => (
+        {sortedItems.map((item) => (
           <Item
             key={item.id}
             item={item}
@@ -107,25 +75,9 @@ function PackingList({ items, handleTogglePacked, handleDeleteItem }) {
   );
 }
 
-function Stats({ items }) {
-  const totalItems = items.length;
-  const packedItems = items.filter((item) => item.packed).length;
-  const packedPercentage = totalItems
-    ? Math.round((packedItems / totalItems) * 100)
-    : 0;
-
-  return (
-    <footer className="stats">
-      <em>
-        You have {totalItems} items in the list. You already packed {packedItems}{" "}
-        ({packedPercentage}%).
-      </em>
-    </footer>
-  );
-}
-
 function App() {
   const [items, setItems] = useState(initialItems);
+  const [sortOption, setSortOption] = useState("input");
 
   const handleAddItem = (newItem) => {
     setItems((prevItems) => [...prevItems, newItem]);
@@ -143,6 +95,10 @@ function App() {
     setItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
+  const handleClearAll = () => {
+    setItems([]);
+  };
+
   return (
     <div className="app">
       <Logo />
@@ -151,7 +107,12 @@ function App() {
         items={items}
         handleTogglePacked={handleTogglePacked}
         handleDeleteItem={handleDeleteItem}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
       />
+      <button onClick={handleClearAll} style={{ margin: "10px", padding: "10px" }}>
+        Clear All
+      </button>
       <Stats items={items} />
     </div>
   );
